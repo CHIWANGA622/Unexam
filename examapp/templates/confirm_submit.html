@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Submission</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex justify-content-center align-items-center" style="height:100vh">
+    <div class="card p-5 shadow text-center" style="width:500px">
+        <h2 class="mb-4">Are you sure you want to submit?</h2>
+        <p class="text-danger">Once submitted, you cannot change your answers!</p>
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success w-100 mb-3">Yes, Submit!</button>
+            <a href="/exam/{{ exam_id }}/" class="btn btn-secondary w-100">Go Back</a>
+        </form>
+    </div>
+</body>
+</html>
