@@ -9,5 +9,6 @@ urlpatterns = [
     path('confirm/<int:exam_id>/', views.confirm_submit_view, name='confirm_submit'),
     path('my-results/', views.my_results_view, name='my_results'),
     path('results/', views.results_view, name='results'),
-    path('change-password/', views.change_password_view, name='change_password')
+    path('change-password/', views.change_password_view, name='change_password'),
+    path('download-results/', views.download_results_view, name='download_results'),
 ]

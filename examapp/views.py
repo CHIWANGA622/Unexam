@@ -29,6 +29,20 @@ def dashboard_view(request):
     total_subjects = Subject.objects.count()
     recent_results = Result.objects.all().order_by('-date')[:10]
     subjects = Subject.objects.all()
+    subject_stats = []
+    for subject in subjects:
+        results = Result.objects.filter(exam__subject=subject)
+        count = results.count()
+        if count > 0:
+            avg = sum([r.score/r.total*100 for r in results]) / count
+            avg = round(avg, 1)
+        else:
+            avg = 0
+        subject_stats.append({
+            'name': subject.name,
+            'count': count,
+            'avg': avg,
+        })
     return render(request, "dashboard.html", {
         "total_students": total_students,
         "total_exams": total_exams,
@@ -36,6 +50,7 @@ def dashboard_view(request):
         "total_subjects": total_subjects,
         "recent_results": recent_results,
         "subjects": subjects,
+        "subject_stats": subject_stats,
     })
 
 @login_required(login_url='/login/')
@@ -150,3 +165,28 @@ def change_password_view(request):
         request.user.save()
         return render(request, "change_password.html", {"success": "Password changed successfully! Please login again."})
     return render(request, "change_password.html")
+import csv
+from django.http import HttpResponse
+
+@login_required(login_url='/login/')
+def download_results_view(request):
+    if not request.user.is_staff:
+        return redirect("exam_list")
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="results.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['#', 'Student', 'Subject', 'Exam', 'Score', 'Total', 'Percentage', 'Date'])
+    results = Result.objects.all().order_by('-date')
+    for i, result in enumerate(results, 1):
+        percentage = round(result.score/result.total*100, 1)
+        writer.writerow([
+            i,
+            result.user.username,
+            result.exam.subject.name,
+            result.exam.title,
+            result.score,
+            result.total,
+            f"{percentage}%",
+            result.date.strftime('%Y-%m-%d %H:%M'),
+        ])
+    return response

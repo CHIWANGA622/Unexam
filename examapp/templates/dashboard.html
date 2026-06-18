@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <title>Admin Dashboard - UnExam</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background-color: #f0f4f8; }
         .navbar { background-color: #1a3c6e; }
         .navbar-brand { color: white !important; font-weight: bold; font-size: 1.5rem; }
         .card-stat { border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        .card-stat .card-body { padding: 25px; }
         .stat-number { font-size: 2.5rem; font-weight: 800; }
         .sidebar { background-color: #1a3c6e; min-height: calc(100vh - 60px); padding: 20px 0; }
         .sidebar a { color: #a0b4c8; text-decoration: none; display: block; padding: 12px 20px; font-size: 0.95rem; }
@@ -18,20 +18,22 @@
         .main-content { padding: 30px; }
         .footer { background-color: #1a3c6e; color: #a0b4c8; padding: 15px 0; font-size: 0.85rem; }
         .footer a { color: #a0b4c8; text-decoration: none; margin: 0 10px; }
-        .footer a:hover { color: #f5820a; }
         .table thead { background-color: #1a3c6e; color: white; }
+        .card { border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar px-4 py-3 d-flex justify-content-between">
         <span class="navbar-brand">UnExam</span>
-        <span style="color:#a0b4c8;">Welcome, {{ request.user.username }} &nbsp;|&nbsp; <a href="/admin/" style="color:#f5820a;">Django Admin</a> &nbsp;|&nbsp; <a href="/login/" style="color:#a0b4c8;">Logout</a></span>
+        <span style="color:#a0b4c8;">
+            Welcome, {{ request.user.username }} &nbsp;|&nbsp;
+            <a href="/admin/" style="color:#f5820a;">Django Admin</a> &nbsp;|&nbsp;
+            <a href="/login/" style="color:#a0b4c8;">Logout</a>
+        </span>
     </nav>
 
     <div class="d-flex">
-        <!-- Sidebar -->
         <div class="sidebar" style="width:220px; min-width:220px;">
             <a href="/dashboard/" class="active">Dashboard</a>
             <a href="/results/">All Results</a>
@@ -42,85 +44,90 @@
             <a href="/admin/examapp/studentexam/">Student Exams</a>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content flex-grow-1">
             <h4 class="mb-4" style="color:#1a3c6e; font-weight:700;">Admin Dashboard</h4>
 
             <!-- Stats Cards -->
             <div class="row mb-4">
                 <div class="col-md-3 mb-3">
-                    <div class="card card-stat">
-                        <div class="card-body">
-                            <p class="text-muted mb-1">Total Students</p>
-                            <p class="stat-number" style="color:#1a3c6e;">{{ total_students }}</p>
-                        </div>
+                    <div class="card card-stat p-4">
+                        <p class="text-muted mb-1">Total Students</p>
+                        <p class="stat-number" style="color:#1a3c6e;">{{ total_students }}</p>
                     </div>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <div class="card card-stat">
-                        <div class="card-body">
-                            <p class="text-muted mb-1">Total Subjects</p>
-                            <p class="stat-number" style="color:#f5820a;">{{ total_subjects }}</p>
-                        </div>
+                    <div class="card card-stat p-4">
+                        <p class="text-muted mb-1">Total Subjects</p>
+                        <p class="stat-number" style="color:#f5820a;">{{ total_subjects }}</p>
                     </div>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <div class="card card-stat">
-                        <div class="card-body">
-                            <p class="text-muted mb-1">Total Exams</p>
-                            <p class="stat-number" style="color:#1a3c6e;">{{ total_exams }}</p>
-                        </div>
+                    <div class="card card-stat p-4">
+                        <p class="text-muted mb-1">Total Exams</p>
+                        <p class="stat-number" style="color:#1a3c6e;">{{ total_exams }}</p>
                     </div>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <div class="card card-stat">
-                        <div class="card-body">
-                            <p class="text-muted mb-1">Total Results</p>
-                            <p class="stat-number" style="color:#f5820a;">{{ total_results }}</p>
-                        </div>
+                    <div class="card card-stat p-4">
+                        <p class="text-muted mb-1">Total Results</p>
+                        <p class="stat-number" style="color:#f5820a;">{{ total_results }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="color:#1a3c6e;" class="mb-0">Recent Results</h5>
+    <a href="/download-results/" class="btn" style="background-color:#f5820a; color:white; border-radius:8px;">Download CSV</a>
+</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card p-4">
+                        <h6 style="color:#1a3c6e;" class="mb-3">Average Score per Subject</h6>
+                        <canvas id="avgChart"></canvas>
                     </div>
                 </div>
             </div>
 
             <!-- Recent Results -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 style="color:#1a3c6e;" class="mb-3">Recent Results</h5>
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Student</th>
-                                <th>Subject</th>
-                                <th>Exam</th>
-                                <th>Score</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for result in recent_results %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ result.user.username }}</td>
-                                <td>{{ result.exam.subject.name }}</td>
-                                <td>{{ result.exam.title }}</td>
-                                <td><strong>{{ result.score }}/{{ result.total }}</strong></td>
-                                <td>{{ result.date }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="6" class="text-center text-muted">No results yet</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="card p-4">
+                <h5 style="color:#1a3c6e;" class="mb-3">Recent Results</h5>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Student</th>
+                            <th>Subject</th>
+                            <th>Exam</th>
+                            <th>Score</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in recent_results %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ result.user.username }}</td>
+                            <td>{{ result.exam.subject.name }}</td>
+                            <td>{{ result.exam.title }}</td>
+                            <td><strong>{{ result.score }}/{{ result.total }}</strong></td>
+                            <td>{{ result.date }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No results yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer text-center">
+    <footer class="footer text-center mt-3">
         <div class="container">
             <span>&copy; 2026 UnExam &nbsp;|&nbsp;</span>
             <a href="#">About Us</a>
@@ -128,6 +135,40 @@
             <a href="#">Contact Us</a>
         </div>
     </footer>
+
+    <script>
+    var subjectLabels = [{% for s in subject_stats %}"{{ s.name }}",{% endfor %}];
+    var subjectData = [{% for s in subject_stats %}{{ s.count }},{% endfor %}];
+    var avgData = [{% for s in subject_stats %}{{ s.avg }},{% endfor %}];
+
+    new Chart(document.getElementById('subjectChart'), {
+        type: 'bar',
+        data: {
+            labels: subjectLabels,
+            datasets: [{
+                label: 'Number of Results',
+                data: subjectData,
+                backgroundColor: '#1a3c6e',
+                borderRadius: 6,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    new Chart(document.getElementById('avgChart'), {
+        type: 'bar',
+        data: {
+            labels: subjectLabels,
+            datasets: [{
+                label: 'Average Score %',
+                data: avgData,
+                backgroundColor: '#f5820a',
+                borderRadius: 6,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+    </script>
 
 </body>
 </html>

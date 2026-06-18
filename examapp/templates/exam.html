@@ -1,57 +1,88 @@
 {% load custom_filters %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{{ title }}</title>
+    <meta charset="UTF-8">
+    <title>{{ title }} - UnExam</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f0f4f8; }
+        .navbar { background-color: #1a3c6e; }
+        .navbar-brand { color: white !important; font-weight: bold; font-size: 1.5rem; }
+        .timer-box { background-color: #1a3c6e; color: white; border-radius: 10px; padding: 10px 25px; display: inline-block; }
+        .timer-box span { font-size: 2rem; font-weight: 800; color: #f5820a; }
+        .card { border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .form-check-input:checked { background-color: #1a3c6e; border-color: #1a3c6e; }
+        .btn-next { background-color: #1a3c6e; color: white; border: none; border-radius: 8px; padding: 10px 30px; }
+        .btn-next:hover { background-color: #f5820a; color: white; }
+        .btn-prev { background-color: #6c757d; color: white; border: none; border-radius: 8px; padding: 10px 30px; }
+        .btn-submit { background-color: #28a745; color: white; border: none; border-radius: 8px; padding: 10px 30px; }
+        .btn-submit:hover { background-color: #f5820a; color: white; }
+        .progress { height: 8px; border-radius: 4px; }
+        .progress-bar { background-color: #1a3c6e; }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <h2 class="text-center mb-2">{{ title }}</h2>
-        <p class="text-center text-muted mb-3">{{ instructions }}</p>
-        <div class="text-center mb-3">
-            <h4>Time Remaining: <span id="timer" class="text-danger"></span></h4>
+<body>
+    <nav class="navbar px-4 py-3 d-flex justify-content-between">
+        <span class="navbar-brand">UnExam</span>
+        <div class="timer-box">
+            Time Remaining: <span id="timer"></span>
         </div>
-        <p class="text-center">Page {{ page }} of {{ total_pages }}</p>
+    </nav>
+
+    <div class="container mt-4">
+        <h4 style="color:#1a3c6e;">{{ title }}</h4>
+        <p class="text-muted">{{ instructions }}</p>
+
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <small class="text-muted">Page {{ page }} of {{ total_pages }}</small>
+                <small class="text-muted">{{ page }}/{{ total_pages }}</small>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width: {% widthratio page total_pages 100 %}%"></div>
+            </div>
+        </div>
+
         <form method="POST">
             {% csrf_token %}
             {% for question in questions %}
-            <div class="card mb-3 shadow">
-                <div class="card-body">
-                    <h5>{{ question.question_text }}</h5>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ question.option1 }}">
-                        <label class="form-check-label">{{ question.option1 }}</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ question.option2 }}">
-                        <label class="form-check-label">{{ question.option2 }}</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ question.option3 }}">
-                        <label class="form-check-label">{{ question.option3 }}</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ question.option4 }}">
-                        <label class="form-check-label">{{ question.option4 }}</label>
-                    </div>
+            <div class="card mb-3 p-4">
+                <h6 style="color:#1a3c6e;">{{ forloop.counter|add:page|add:"-1" }}. {{ question.question_text }}</h6>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ question.option1 }}" {% if saved_answers|get_item:question.id == question.option1 %}checked{% endif %}>
+                    <label class="form-check-label">{{ question.option1 }}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ question.option2 }}" {% if saved_answers|get_item:question.id == question.option2 %}checked{% endif %}>
+                    <label class="form-check-label">{{ question.option2 }}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ question.option3 }}" {% if saved_answers|get_item:question.id == question.option3 %}checked{% endif %}>
+                    <label class="form-check-label">{{ question.option3 }}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ question.option4 }}" {% if saved_answers|get_item:question.id == question.option4 %}checked{% endif %}>
+                    <label class="form-check-label">{{ question.option4 }}</label>
                 </div>
             </div>
             {% endfor %}
+
             <div class="d-flex justify-content-between mb-5">
                 {% if page > 1 %}
-                <a href="/exam/{{ exam_id }}/?page={{ page|add:'-1' }}" class="btn btn-secondary">Previous</a>
+                <a href="/exam/{{ exam_id }}/?page={{ page|add:'-1' }}" class="btn-prev">Previous</a>
                 {% else %}
                 <span></span>
                 {% endif %}
                 {% if page < total_pages %}
-                <button type="submit" name="next" class="btn btn-primary">Next</button>
+                <button type="submit" name="next" class="btn-next">Next</button>
                 {% else %}
-                <button type="submit" name="submit" class="btn btn-success">Submit</button>
+                <button type="submit" name="submit" class="btn-submit">Submit Exam</button>
                 {% endif %}
             </div>
         </form>
     </div>
+
     <script>
     var timeLeft = parseInt(sessionStorage.getItem('examTimer_{{ exam_id }}'));
     if (isNaN(timeLeft) || timeLeft <= 0) {
@@ -65,7 +96,7 @@
         if(timeLeft <= 0){
             clearInterval(countdown);
             sessionStorage.removeItem('examTimer_{{ exam_id }}');
-            alert("Time is up!");
+            alert("Time is up! Your exam will be submitted now.");
             document.querySelector("form").submit();
         }
         timeLeft--;
